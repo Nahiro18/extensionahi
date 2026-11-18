@@ -94,7 +94,7 @@ jobs:
       - name: Accept Android SDK Licenses
         run: yes | sdkmanager --licenses || true
 
-      - name: Build Plugins
+      - name: Build Cs-Karma Plugins
         env:
           JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
         run: |
@@ -102,7 +102,40 @@ jobs:
           chmod +x gradlew
           ./gradlew make makePluginsJson
           cp **/build/*.cs3 $GITHUB_WORKSPACE/builds || true
-          cp build/plugins.json $GITHUB_WORKSPACE/builds || true
+          cp build/plugins.json $GITHUB_WORKSPACE/builds/plugins-cskarma.json || true
+
+      - name: Build storm-ext Plugins
+        env:
+          JAVA_HOME: ${{ env.JAVA_HOME_21_X64 }}
+        run: |
+          cd $GITHUB_WORKSPACE/src/storm-ext
+          chmod +x gradlew
+          ./gradlew make makePluginsJson
+          cp **/build/*.cs3 $GITHUB_WORKSPACE/builds || true
+          cp build/plugins.json $GITHUB_WORKSPACE/builds/plugins-stormext.json || true
+
+      - name: Merge plugins.json
+        run: |
+          python3 - << 'PYEOF'
+          import json, os
+          builds = "/github/workspace/builds" if os.path.exists("/github/workspace/builds") else os.environ.get("GITHUB_WORKSPACE","") + "/builds"
+          out = []
+          for f in ["plugins-cskarma.json","plugins-stormext.json"]:
+              p = os.path.join(builds, f)
+              if os.path.exists(p):
+                  with open(p) as fh:
+                      data = json.load(fh)
+                  for entry in data:
+                      # Rewrite URL to point to this repo's builds branch
+                      name = entry.get("name","")
+                      entry["url"] = f"https://raw.githubusercontent.com/Nahiro18/extensionahi/builds/{name}.cs3"
+                      entry["repositoryUrl"] = "https://github.com/Nahiro18/extensionahi"
+                      out.append(entry)
+                  os.remove(p)
+          with open(os.path.join(builds,"plugins.json"),"w") as fh:
+              json.dump(out, fh, indent=2, ensure_ascii=False)
+          print(f"Merged {len(out)} plugins")
+          PYEOF
 
       - name: Push builds
         env:
