@@ -32,6 +32,19 @@ jobs:
         with:
           ref: "builds"
           path: "builds"
+          fetch-depth: 0
+
+      - name: Create builds branch if not exists
+        run: |
+          cd $GITHUB_WORKSPACE/builds
+          if ! git rev-parse --verify builds >/dev/null 2>&1; then
+            git checkout --orphan builds
+            git rm -rf .
+            git commit --allow-empty -m "Initial builds branch"
+            git push origin builds
+          else
+            git checkout builds
+          fi
 
       - name: Clean old builds
         run: rm -f $GITHUB_WORKSPACE/builds/*.cs3

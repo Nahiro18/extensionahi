@@ -18,7 +18,7 @@ class Tokybook : MainAPI() {
     override var name = "Tokybook"
     override val hasMainPage = true
     override var lang = "en"
-    override val hasQuickSearch = false
+    override val hasQuickSearch = true
     override val supportedTypes = setOf(TvType.Others, TvType.AudioBook)
 
 
@@ -100,6 +100,8 @@ class Tokybook : MainAPI() {
 
         return content.mapNotNull { it.toResult() }.toNewSearchResponseList()
     }
+
+    override suspend fun quickSearch(query: String): List<SearchResponse>? = search(query, 1)?.items
 
     private fun Map<String, Any>.toResult(): SearchResponse? {
         val title = this["title"] as? String ?: return null

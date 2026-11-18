@@ -72,7 +72,7 @@ class Streamed() : MainAPI() {
         )
     }
 
-    override suspend fun search(query: String): List<SearchResponse> {
+    override suspend fun search(query: String, page: Int): SearchResponseList {
         val mapper = jacksonObjectMapper().registerKotlinModule()
 
         val matches = mutableListOf<Matches>()
@@ -80,7 +80,7 @@ class Streamed() : MainAPI() {
         val list: List<Matches> = mapper.readValue(txt)
         matches.addAll(list)
 
-        if (matches.isEmpty()) return emptyList()
+        if (matches.isEmpty()) return newSearchResponseList(emptyList())
 
         val unique = matches
             .associateBy { it.id ?: it.title ?: java.util.UUID.randomUUID().toString() }
@@ -108,9 +108,9 @@ class Streamed() : MainAPI() {
             titleNorm.contains(normalizedQuery) || sourceMatch
         }
 
-        if (filtered.isEmpty()) return emptyList()
+        if (filtered.isEmpty()) return newSearchResponseList(emptyList())
 
-        return filtered.mapNotNull { match ->
+        val items = filtered.mapNotNull { match ->
             val title = match.title ?: return@mapNotNull null
             val firstSourceId =
                 match.sources?.firstOrNull()?.id ?: match.id ?: return@mapNotNull null
@@ -123,6 +123,8 @@ class Streamed() : MainAPI() {
                     mapOf("User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:141.0) Gecko/20100101 Firefox/141.0")
             }
         }
+
+        return newSearchResponseList(items, hasNext = page == 1 && items.size >= 20)
     }
 
     private fun normalizeTurkish(s: String): String {
@@ -142,9 +144,7 @@ class Streamed() : MainAPI() {
         return res.replace("[^a-z0-9 ]".toRegex(), "").trim()
     }
 
-    override suspend fun quickSearch(query: String): List<SearchResponse> {
-        return search(query)
-    }
+    override suspend fun quickSearch(query: String): List<SearchResponse>? = search(query, 1).items
 
     override suspend fun load(url: String): LoadResponse? {
         val sourceId = url.substringAfterLast("/")

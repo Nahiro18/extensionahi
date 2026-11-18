@@ -16,7 +16,7 @@ class Footballia : MainAPI() {
     override var name = "Footballia"
     override val hasMainPage = true
     override var lang = "en"
-    override val hasQuickSearch = false
+    override val hasQuickSearch = true
     override val supportedTypes = setOf(TvType.Live)
 
     override val mainPage = mainPageOf(
@@ -90,7 +90,7 @@ class Footballia : MainAPI() {
         return newSearchResponseList(allMatches, hasNext = hasNext)
     }
 
-    override suspend fun quickSearch(query: String): List<SearchResponse>? = search(query)
+    override suspend fun quickSearch(query: String): List<SearchResponse>? = search(query, 1).items
 
     override suspend fun load(url: String): LoadResponse? {
         val document = app.get(url, headers = mapOf(

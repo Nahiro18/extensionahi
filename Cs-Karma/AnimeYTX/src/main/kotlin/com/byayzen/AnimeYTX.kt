@@ -118,32 +118,28 @@ class AnimeYTX : MainAPI() {
         }
     }
 
-    // override suspend fun search(query: String, page: Int): SearchResponseList? {
-    //     val url = if (page <= 1) "$mainUrl/?s=$query" else "$mainUrl/page/$page/?s=$query"
-    //     val document = app.get(url).document
+    override suspend fun search(query: String, page: Int): SearchResponseList {
+        val url = if (page <= 1) "$mainUrl/?s=$query" else "$mainUrl/page/$page/?s=$query"
+        val document = app.get(url).document
 
-    //     val items = document.select("article.bs").mapNotNull {
-    //         it.toSearchResult()
-    //     }
+        val items = document.select("article.bs").mapNotNull {
+            it.toSearchResult()
+        }
 
-    //     return newSearchResponseList(items)
-    // }
+        return newSearchResponseList(items)
+    }
 
-    override suspend fun quickSearch(query: String): List<SearchResponse>? = search(query)
+    private fun Element.toSearchResult(): SearchResponse? {
+        val title = this.selectFirst("h3.title a")?.attr("title") ?: this.selectFirst("h3 a")?.text() ?: return null
+        val href = fixUrlNull(this.selectFirst("h3.title a")?.attr("href") ?: this.selectFirst("h3 a")?.attr("href")) ?: return null
+        val posterUrl = fixUrlNull(this.selectFirst("img")?.attr("data-src") ?: this.selectFirst("img")?.attr("src"))
+
+        return newAnimeSearchResponse(title, href, TvType.Anime) { this.posterUrl = posterUrl }
+    }
+
+    override suspend fun quickSearch(query: String): List<SearchResponse>? = search(query, 1).items
 
     override suspend fun load(url: String): LoadResponse? {
-        val headers = mapOf(
-            "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:155.0) Gecko/20100101 Firefox/155.0",
-            "Accept" to "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Language" to "tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7",
-            "Cookie" to "cf_clearance=z4kt4KEpD_kbNAhFvY.RNwZrgFvXtG_2g8R1ILswa.8-1788606738-1.2.1.1-ZZP84dahkkQXQCKL5wXJZSJdT2Pb5TG8p76zs_8RWt0tSuHNxOabyA8kXy_InYDItqvOGTVTHb530VFcPI877AG6y7M6xjkiBjnncY65TK_8FM5um0eCsZcAA8GwiPuBnJmf1DT_ePpyzffdSiteYyi___8EGZIO3xagLUXmnH9n_eWkzQBGtAu0OZU7uh1GqwhGT6s6_57_w5QDQA_nODuGfg8SwIvFsiifhvfyLm0XP1ETKRyf_N2lXZRXWt5IFjCp_S7VXPlYjbbqKYyqEqRYsGv.rdgysriYXhqPZCeEtHK11TMXo1xktIqEHZPn1aQtTGnsND4cnJyH31zCroQdc0H9OaJ5T4MGVh5eRp4",
-            "Upgrade-Insecure-Requests" to "1",
-            "Sec-Fetch-Dest" to "document",
-            "Sec-Fetch-Mode" to "navigate",
-            "Sec-Fetch-Site" to "none",
-            "Sec-Fetch-User" to "?1"
-        )
-
         var pageUrl = url
         var document = app.get(pageUrl, headers = headers).document
         Log.d("Ayzen", "Load URL: $pageUrl")

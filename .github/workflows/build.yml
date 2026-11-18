@@ -46,6 +46,10 @@ jobs:
             git branch -M builds
             git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
             git push -u origin builds || true
+          else
+            # Ensure we're on the builds branch even if .git exists from previous run
+            git branch -M builds
+            git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           fi
 
       - name: Clean old builds
@@ -107,7 +111,9 @@ jobs:
           cd $GITHUB_WORKSPACE/builds
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
+          # Ensure we're on the builds branch
+          git branch -M builds
           git add .
           git remote set-url origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
           git commit --amend -m "Build $GITHUB_SHA" || git commit -m "Build $GITHUB_SHA" || exit 0
-          git push origin builds:builds --force
+          git push origin builds --force
