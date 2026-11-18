@@ -78,7 +78,8 @@ class GnulaHD : MainAPI() {
         return newHomePageResponse(request.name, home, hasNext = home.isNotEmpty())
     }
 
-    override suspend fun search(query: String): List<SearchResponse> {
+    override suspend fun search(query: String, page: Int): SearchResponseList {
+        if (page > 1) return newSearchResponseList(emptyList(), hasNext = false)
         val url = "$mainUrl/wp-json/gnrd/v1/search?q=$query"
         Log.d(tag, "search: $query")
         val results = JSONObject(
@@ -92,7 +93,7 @@ class GnulaHD : MainAPI() {
             ).text
         ).getJSONArray("results")
 
-        return (0 until results.length()).mapNotNull { i ->
+        val items = (0 until results.length()).mapNotNull { i ->
             val item    = results.getJSONObject(i)
             val title   = item.getString("title").ifEmpty { return@mapNotNull null }
             val href    = fixUrl(item.getString("url").ifEmpty { return@mapNotNull null })
@@ -110,9 +111,11 @@ class GnulaHD : MainAPI() {
                 else            -> newMovieSearchResponse(title, href, type) { this.posterUrl = poster }
             }
         }
+
+        return newSearchResponseList(items, hasNext = false)
     }
 
-    override suspend fun quickSearch(query: String): List<SearchResponse> = search(query)
+    override suspend fun quickSearch(query: String): List<SearchResponse>? = search(query, 1)?.items
 
     override suspend fun load(url: String): LoadResponse? {
         Log.d(tag, "load: $url")
