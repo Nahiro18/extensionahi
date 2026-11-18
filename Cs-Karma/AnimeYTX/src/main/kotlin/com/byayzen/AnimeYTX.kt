@@ -24,6 +24,11 @@ import java.util.regex.Pattern
 class AnimeYTX : MainAPI() {
     private val TAG = "AnimeYTX"
 
+    private val headers = mapOf(
+        "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0",
+        "Referer" to "https://animeyt.cc/"
+    )
+
     override var mainUrl = "https://animeyt.cc"
     override var name = "AnimeYTX"
     override val hasMainPage = true
@@ -56,10 +61,6 @@ class AnimeYTX : MainAPI() {
 
         Log.d("AnimeYT", "Request URL: $url | Page: $page | Category: ${request.name}")
 
-        val headers = mapOf(
-            "User-Agent" to "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:135.0) Gecko/20100101 Firefox/135.0",
-            "Referer" to "$mainUrl/"
-        )
         val response = app.get(url, headers = headers)
         Log.d("AnimeYT", "Response Code: ${response.code} | Category: ${request.name}")
 
