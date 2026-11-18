@@ -17,7 +17,7 @@ class DoramasLatinoX : MainAPI() {
     override val hasMainPage = true
     override var lang = "mx"
     override val hasQuickSearch = false
-    override val supportedTypes = setOf(TvType.AsianDrama)
+    override val supportedTypes = setOf(TvType.AsianDrama, TvType.TvSeries)
     //Movie, AnimeMovie, TvSeries, Cartoon, Anime, OVA, Torrent, Documentary, AsianDrama, Live, NSFW, Others, Music, AudioBook, CustomMedia, Audio, Podcast,
 
     override val mainPage = mainPageOf(
@@ -188,6 +188,9 @@ class DoramasLatinoX : MainAPI() {
         callback: (ExtractorLink) -> Unit
     ): Boolean {
         val document = app.get(data).document
+        var found = false
+
+        // Try dooplay player options (original method)
         document.select("li.dooplay_player_option").forEach { option ->
             val post = option.attr("data-post")
             val type = option.attr("data-type")
@@ -203,10 +206,37 @@ class DoramasLatinoX : MainAPI() {
                     val iframe = app.get(embedUrl, referer = data).document.selectFirst("iframe")
                         ?.attr("src")
                     loadExtractor(iframe ?: embedUrl, embedUrl, subtitleCallback, callback)
+                    found = true
                 }
             }
         }
-        return true
+
+        // Fallback: try to find iframes directly
+        if (!found) {
+            document.select("iframe[src]").forEach { iframe ->
+                val src = iframe.attr("src")
+                if (src.isNotEmpty()) {
+                    loadExtractor(src, data, subtitleCallback, callback)
+                    found = true
+                }
+            }
+        }
+
+        // Fallback: try to find player links in scripts
+        if (!found) {
+            document.select("script").forEach { script ->
+                val html = script.html()
+                Regex("""["'](https?://[^"']+\.(?:m3u8|mp4|embed)[^"']*)["']""").findAll(html).forEach { match ->
+                    val url = match.groupValues[1]
+                    if (url.isNotEmpty()) {
+                        loadExtractor(url, data, subtitleCallback, callback)
+                        found = true
+                    }
+                }
+            }
+        }
+
+        return found
     }
 
     data class EmbedResponse(

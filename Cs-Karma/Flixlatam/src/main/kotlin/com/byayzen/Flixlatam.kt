@@ -252,11 +252,34 @@ class Flixlatam : MainAPI() {
             data
         }
 
-        val response  = app.get(pageUrl, headers = mapOf("Referer" to mainUrl))
-        val iframeUrl = response.document.selectFirst("div.play iframe")?.attr("src")
-            ?: response.document.selectFirst("iframe[src*='embed69']")?.attr("src")
-            ?: response.document.selectFirst("iframe[src*='/vidurl/']")?.attr("src")
-            ?: return false
+        val response = app.get(pageUrl, headers = mapOf("Referer" to mainUrl))
+        val doc = response.document
+
+        // Try multiple iframe selectors for different player types
+        val iframeUrl = doc.selectFirst("div.play iframe")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='embed69']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='/vidurl/']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='fembed']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='filemoon']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='streamwish']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='vidhide']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='dintezuvio']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='hglink']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='minochinos']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='ghbrisk']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='abyss']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='short.ink']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='player.abyss']")?.attr("src")
+            ?: doc.selectFirst("iframe[src*='playhydrax']")?.attr("src")
+            ?: doc.select("iframe[src]").firstOrNull()?.attr("src")
+            ?: run {
+                // Try to find encrypted links in page
+                val decryptedLinks = decryptDataLinks(doc.html())
+                decryptedLinks.forEach { link ->
+                    loadExtractor(link, pageUrl, subtitleCallback, callback)
+                }
+                return decryptedLinks.isNotEmpty()
+            }
 
         val finalIframeUrl = fixUrlNull(iframeUrl) ?: return false
         return resolveEmbed69(finalIframeUrl, pageUrl, subtitleCallback, callback)
@@ -280,6 +303,10 @@ class Flixlatam : MainAPI() {
                     .replace("hglink.to", "streamwish.to")
                     .replace("minochinos.com", "vidhide.com")
                     .replace("ghbrisk.com", "streamwish.to")
+                    .replace("filemoon.to", "filemoon.to")
+                    .replace("filemoon.in", "filemoon.in")
+                    .replace("filemoon.sx", "filemoon.sx")
+                    .replace("bysedikamoum.com", "filemoon.to")
 
                 Log.d(name, fixedUrl)
                 loadExtractor(fixedUrl, url, subtitleCallback) {
