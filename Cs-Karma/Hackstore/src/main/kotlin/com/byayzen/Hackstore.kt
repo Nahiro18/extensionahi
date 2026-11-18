@@ -233,7 +233,7 @@ class Hackstore : MainAPI() {
                 val slug = data.substringAfter("post_name=").substringBefore("&")
                 val type = data.substringAfter("post_type=").substringBefore("&").ifEmpty { "movies" }
                 val singleUrl = "$mainUrl/api/rest/single?post_name=$slug&post_type=$type"
-                getJson<SingleResponse>(singleUrl)?.data?._id?.toString() ?: return false
+                getJson<SingleResponse>(singleUrl)?.data?.id?.toString() ?: return false
             }
             else -> data
         }
