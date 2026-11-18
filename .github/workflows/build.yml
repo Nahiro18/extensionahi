@@ -32,6 +32,21 @@ jobs:
         with:
           ref: "builds"
           path: "builds"
+          persist-credentials: false
+        continue-on-error: true
+
+      - name: Create builds branch if not exists
+        run: |
+          cd $GITHUB_WORKSPACE/builds
+          if [ ! -d ".git" ]; then
+            git init
+            git config user.email "actions@github.com"
+            git config user.name "GitHub Actions"
+            git commit --allow-empty -m "Initial commit"
+            git branch -M builds
+            git remote add origin "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git"
+            git push -u origin builds || true
+          fi
 
       - name: Clean old builds
         run: rm -f $GITHUB_WORKSPACE/builds/*.cs3
