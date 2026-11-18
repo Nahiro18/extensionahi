@@ -1,0 +1,18 @@
+package com.kerimmkirac
+
+import com.lagradost.cloudstream3.plugins.CloudstreamPlugin
+import com.lagradost.cloudstream3.plugins.Plugin
+import android.content.Context
+import com.cskarma.ortak.extractor.*
+
+@CloudstreamPlugin
+class FullRacesPlugin: Plugin() {
+    override fun load(context: Context) {
+        registerMainAPI(FullRaces())
+        FileMoonExtractor.DOMAINS.forEach { registerExtractorAPI(FileMoonExtractor(it)) }
+        registerExtractorAPI(OkRuExtractor())
+        registerExtractorAPI(Odnoklassniki())
+        registerExtractorAPI(VkCom())
+        registerExtractorAPI(VkExtractor())
+    }
+}

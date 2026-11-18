@@ -1,0 +1,19 @@
+// ! Bu araç @Kraptor123 tarafından | @kekikanime için yazılmıştır.
+package com.kraptor
+
+import com.cskarma.ortak.extractor.*
+import com.lagradost.cloudstream3.extractors.PixelDrain
+import com.lagradost.cloudstream3.plugins.CloudstreamPlugin
+import com.lagradost.cloudstream3.plugins.Plugin
+
+@CloudstreamPlugin
+class AnimeAVPlugin: Plugin() {
+    override fun load() {
+        registerMainAPI(AnimeAV())
+        registerExtractorAPI(Mp4Upload())
+        registerExtractorAPI(PixelDrain())
+        registerExtractorAPI(AnimeAVHLS())
+        registerExtractorAPI(AnimeavUPNS())
+        FileMoonExtractor.DOMAINS.forEach { registerExtractorAPI(FileMoonExtractor(it)) }
+    }
+}
