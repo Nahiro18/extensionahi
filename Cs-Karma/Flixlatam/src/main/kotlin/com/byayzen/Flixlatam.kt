@@ -255,6 +255,17 @@ class Flixlatam : MainAPI() {
         val response = app.get(pageUrl, headers = mapOf("Referer" to mainUrl))
         val doc = response.document
 
+        // If page didn't load properly, try original URL
+        if (doc.select("iframe").isEmpty() && doc.select("script").isEmpty()) {
+            val fallbackResponse = app.get(data, headers = mapOf("Referer" to mainUrl))
+            val fallbackDoc = fallbackResponse.document
+            val fallbackIframe = fallbackDoc.select("iframe[src]").firstOrNull()?.attr("src")
+            if (fallbackIframe != null) {
+                val finalIframeUrl = fixUrlNull(fallbackIframe) ?: return false
+                return resolveEmbed69(finalIframeUrl, data, subtitleCallback, callback)
+            }
+        }
+
         // Try multiple iframe selectors for different player types
         val iframeUrl = doc.selectFirst("div.play iframe")?.attr("src")
             ?: doc.selectFirst("iframe[src*='embed69']")?.attr("src")

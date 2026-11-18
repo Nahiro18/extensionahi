@@ -17,6 +17,7 @@ class SeriesMetroProvider: MainAPI() {
     override val hasDownloadSupport = true
     override val supportedTypes = setOf(
         TvType.TvSeries,
+        TvType.Movie,
     )
 
     override suspend fun getMainPage(page: Int, request : MainPageRequest): HomePageResponse {
